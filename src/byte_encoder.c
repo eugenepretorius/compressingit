@@ -19,7 +19,7 @@ uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size)
 
     #define BC_COMPRESSION_FAILED ((uint16_t) (-1))
     #define BC_EXCLUDE            ((uint8_t) (127))
-    #define BC_MAX_DUPLICATES     ((uint8_t) (17))
+    #define BC_MAX_DUPLICATES     ((uint8_t) (127))
     #define BC_CHECK_OVERFLOW
 
 #ifdef BC_CHECK_OVERFLOW

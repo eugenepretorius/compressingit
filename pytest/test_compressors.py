@@ -4,15 +4,40 @@ import matplotlib.image as mpimg
 import numpy as np
 import unittest
 
-# TEST duplicate encoder
+# TEST compress_duplicator.py
 # from compress_duplicator import encoder_duplicates as encoder
 # from compress_duplicator import decoder_duplicates as decoder
 # from compress_duplicator import COMPRESSOR_ID
 
-# TEST duplicate encoder with nibble optimization
+# TEST compress_duplicator_nibble.py
 from compress_duplicator_nibble import encoder_duplicates_with_nibble as encoder
 from compress_duplicator_nibble import decoder_duplicates_with_nibble as decoder
 from compress_duplicator_nibble import COMPRESSOR_ID
+
+# TEST c-code implementation
+import ctypes
+from ctypes import cdll
+from ctypes import c_int
+from ctypes import c_void_p
+from ctypes import c_uint8
+from ctypes import POINTER
+from ctypes import c_uint32
+from ctypes import byref
+from numpy.ctypeslib import ndpointer as NDPOINTER
+
+import os
+LIB_NAME = 'bc_compress.dylib'
+LIB_PATH = os.path.join(os.path.dirname(__file__), "../", LIB_NAME)
+
+clib = cdll.LoadLibrary(LIB_PATH)
+clib.byte_compress.argtypes = [NDPOINTER(c_uint8), c_uint32]
+clib.byte_compress.restype = c_uint32
+
+
+def encoder(data):
+    data = np.array(data, dtype=np.uint8)
+    size = clib.byte_compress(data, c_uint32(len(data)))
+    return list(data[0:size])
 
 
 def _common_enc_dec(test_data):
@@ -27,176 +52,177 @@ def _common_enc_dec(test_data):
     # print("in-bytes #{}, out-bytes #{}".format(len(test_data), len(encoded_bytes)))
     return encoded_bytes
 
-#
+
 # def test_1byte():
 #     dummy_data = list([65])
 #     compressed_data = _common_enc_dec(dummy_data)
 #     return compressed_data
-#
-#
-# def test_all_zeros():
-#     dummy_data = list([0]*24)
-#     compressed_data = _common_enc_dec(dummy_data)
-#     return compressed_data
-#
+
+
+def test_all_zeros():
+    dummy_data = list([0]*24)
+    compressed_data = _common_enc_dec(dummy_data)
+    return compressed_data
+
+
 # def test_all_equal_non_zero():
 #     dummy_data = list([64]*64)
 #     compressed_data = _common_enc_dec(dummy_data)
 #     return compressed_data
-#
-#
+
+
 # def test_all_max():
 #     dummy_data = list([127]*64)
 #     compressed_data = _common_enc_dec(dummy_data)
 #     return compressed_data
-
-
-def test_example_case1():
-    dummy_data = [1, 2, 3]
-    compressed_data = _common_enc_dec(dummy_data)
-    # print(compressed_data)
-    return compressed_data
-
-
-def test_example_case2():
-    dummy_data = [1, 2, 2]
-    compressed_data = _common_enc_dec(dummy_data)
-    # print(compressed_data)
-    return compressed_data
-
-
-def test_example_case3():
-    dummy_data = [1, 2, 2, 3]
-    compressed_data = _common_enc_dec(dummy_data)
-    # print(compressed_data)
-    return compressed_data
-
-
-def test_example_case4():
-    dummy_data = [1, 2, 2, 3, 3, 3]
-    compressed_data = _common_enc_dec(dummy_data)
-    # print(compressed_data)
-    return compressed_data
-
-
-def test_concatenated_cases():
-    dummy_data = [1, 2, 3] + \
-                 [1, 2, 2] + \
-                 [1, 2, 2, 3] + \
-                 [1, 2, 2, 3, 3, 3]
-
-    x = test_example_case1() + test_example_case2() + test_example_case3() + test_example_case4()
-    y = encoder(dummy_data)
-
-    if COMPRESSOR_ID == "THE NIBBLER":
-        assert x != y       # cant guarantee that packing encoded bytes will be same as encoded a subset.
-
-    if COMPRESSOR_ID == "THE DUPE":
-        assert x == y       # can guarantee that they will be the same.
-
-    assert decoder(x) == dummy_data
-    assert decoder(y) == dummy_data
-
-
-def test_monotonic_inc():
-    def f(x): return x + randint(0, 1)
-    dummy_data = [f(x) for x in range(0, 100)]
-    compressed_data = _common_enc_dec(dummy_data)
-
-
-def test_monotonic_dec():
-    def f(x): return x - randint(0, 1)
-    dummy_data = [f(x) for x in range(100, 0, -1)]
-    compressed_data = _common_enc_dec(dummy_data)
-
-
-def test_noise_uniform():
-    """ test_noise_uniform: Random data should not be compressible, but should be lossless decompressed."""
-    dummy_data = np.array(np.random.uniform(0, 1, 100) * 127, dtype=np.uint8)
-
-    encoded_bytes = encoder(dummy_data)
-    decoded_bytes = decoder(encoded_bytes)
-
-    assert list(decoded_bytes) == list(dummy_data)
-
-
-def test_example_data():
-    example_data = [0x03, 0x74, 0x04, 0x04, 0x04, 0x35, 0x35, 0x64,
-                    0x64, 0x64, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x56, 0x45, 0x56, 0x56, 0x56, 0x09, 0x09, 0x09]
-
-    compressed_data = _common_enc_dec(example_data)
-    assert len(compressed_data) <= 16
-    return compressed_data
-
-
-def test_image_with_variable_length():
-    """ Test if an encoding data stream can be concatenated with same results on 'real' data"""
-    img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
-    c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
-    cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
-
-    rows, cols = np.shape(cu8)
-    cu8_compressed = np.zeros((rows, cols), dtype=np.uint8)
-    bytes_compressed = 0
-    row_encoder_len = np.zeros(cols)    # since zero padding not included storing each rows length for decompress input
-
-    def encode_section(row, start, stop):
-        encoded_bytes = encoder(cu8[row, start:stop])
-        i = int(row_encoder_len[row])
-        cu8_compressed[row, i: i+len(encoded_bytes)] = encoded_bytes
-        row_encoder_len[row] += len(encoded_bytes)
-
-        return row_encoder_len[row]
-
-    for row in range(0, rows):
-        m = randint(0, cols)    # choose a random point to split the row and encode [0:m] and [m+1:cols]
-        bytes_compressed += encode_section(row, 0, m)
-        bytes_compressed += encode_section(row, m, cols)
-
-        decoded_bytes = decoder(cu8_compressed[row, 0: int(row_encoder_len[row])])
-        assert list(cu8[row, :]) == list(decoded_bytes)
-
-
-def test_image_and_save():
-    img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
-    c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
-    cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
-
-    rows, cols = np.shape(cu8)
-    cu8_compressed = np.zeros((rows, cols), dtype=np.uint8)
-    bytes_compressed = 0
-    row_encoder_len = []    # since zero padding not included storing each rows length for decompress input
-
-    for row in range(0, rows):
-        encoded_bytes = encoder(cu8[row, :])
-        bytes_compressed += len(encoded_bytes)
-        row_encoder_len.append(len(encoded_bytes))
-        cu8_compressed[row, 0: len(encoded_bytes)] = encoded_bytes
-
-        decoded_bytes = decoder(encoded_bytes)
-        assert list(cu8[row, :]) == list(decoded_bytes)
-
-    cu8_uncompressed = np.zeros((rows, cols), dtype=np.uint8)
-    for row in range(0, rows):
-        encoded_bytes = cu8_compressed[row, 0:row_encoder_len[row]]
-        decoded_bytes = decoder(encoded_bytes)
-        cu8_uncompressed[row, :] = decoded_bytes[0:cols]
-
-    plt.figure()
-    plt.subplot(221)
-    plt.title("Input Image {} bytes".format(rows*cols))
-    plt.imshow(cu8)
-    plt.axis('off')
-
-    plt.subplot(222)
-    plt.title("Compressed Image {} bytes".format(bytes_compressed))
-    plt.imshow(cu8_compressed)
-    plt.axis('off')
-
-    plt.subplot(224)
-    plt.title("Decompressed Image ".format(bytes_compressed))
-    plt.imshow(cu8_uncompressed)
-    plt.axis('off')
-    plt.savefig("./test_data/compressed-falcon-heavy-spacex.png")
-    # plt.show()
+#
+#
+# def test_example_case1():
+#     dummy_data = [1, 2, 3]
+#     compressed_data = _common_enc_dec(dummy_data)
+#     # print(compressed_data)
+#     return compressed_data
+#
+#
+# def test_example_case2():
+#     dummy_data = [1, 2, 2]
+#     compressed_data = _common_enc_dec(dummy_data)
+#     # print(compressed_data)
+#     return compressed_data
+#
+#
+# def test_example_case3():
+#     dummy_data = [1, 2, 2, 3]
+#     compressed_data = _common_enc_dec(dummy_data)
+#     # print(compressed_data)
+#     return compressed_data
+#
+#
+# def test_example_case4():
+#     dummy_data = [1, 2, 2, 3, 3, 3]
+#     compressed_data = _common_enc_dec(dummy_data)
+#     # print(compressed_data)
+#     return compressed_data
+#
+#
+# def test_concatenated_cases():
+#     dummy_data = [1, 2, 3] + \
+#                  [1, 2, 2] + \
+#                  [1, 2, 2, 3] + \
+#                  [1, 2, 2, 3, 3, 3]
+#
+#     x = test_example_case1() + test_example_case2() + test_example_case3() + test_example_case4()
+#     y = encoder(dummy_data)
+#
+#     if COMPRESSOR_ID == "THE NIBBLER":
+#         assert x != y       # cant guarantee that packing encoded bytes will be same as encoded a subset.
+#
+#     if COMPRESSOR_ID == "THE DUPE":
+#         assert x == y       # can guarantee that they will be the same.
+#
+#     assert decoder(x) == dummy_data
+#     assert decoder(y) == dummy_data
+#
+#
+# def test_monotonic_inc():
+#     def f(x): return x + randint(0, 1)
+#     dummy_data = [f(x) for x in range(0, 100)]
+#     compressed_data = _common_enc_dec(dummy_data)
+#
+#
+# def test_monotonic_dec():
+#     def f(x): return x - randint(0, 1)
+#     dummy_data = [f(x) for x in range(100, 0, -1)]
+#     compressed_data = _common_enc_dec(dummy_data)
+#
+#
+# def test_noise_uniform():
+#     """ test_noise_uniform: Random data should not be compressible, but should be lossless decompressed."""
+#     dummy_data = np.array(np.random.uniform(0, 1, 100) * 127, dtype=np.uint8)
+#
+#     encoded_bytes = encoder(dummy_data)
+#     decoded_bytes = decoder(encoded_bytes)
+#
+#     assert list(decoded_bytes) == list(dummy_data)
+#
+#
+# def test_example_data():
+#     example_data = [0x03, 0x74, 0x04, 0x04, 0x04, 0x35, 0x35, 0x64,
+#                     0x64, 0x64, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,
+#                     0x56, 0x45, 0x56, 0x56, 0x56, 0x09, 0x09, 0x09]
+#
+#     compressed_data = _common_enc_dec(example_data)
+#     assert len(compressed_data) <= 16
+#     return compressed_data
+#
+#
+# def test_image_with_variable_length():
+#     """ Test if an encoding data stream can be concatenated with same results on 'real' data"""
+#     img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
+#     c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
+#     cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
+#
+#     rows, cols = np.shape(cu8)
+#     cu8_compressed = np.zeros((rows, cols), dtype=np.uint8)
+#     bytes_compressed = 0
+#     row_encoder_len = np.zeros(cols)    # since zero padding not included storing each rows length for decompress input
+#
+#     def encode_section(row, start, stop):
+#         encoded_bytes = encoder(cu8[row, start:stop])
+#         i = int(row_encoder_len[row])
+#         cu8_compressed[row, i: i+len(encoded_bytes)] = encoded_bytes
+#         row_encoder_len[row] += len(encoded_bytes)
+#
+#         return row_encoder_len[row]
+#
+#     for row in range(0, rows):
+#         m = randint(0, cols)    # choose a random point to split the row and encode [0:m] and [m+1:cols]
+#         bytes_compressed += encode_section(row, 0, m)
+#         bytes_compressed += encode_section(row, m, cols)
+#
+#         decoded_bytes = decoder(cu8_compressed[row, 0: int(row_encoder_len[row])])
+#         assert list(cu8[row, :]) == list(decoded_bytes)
+#
+#
+# def test_image_and_save():
+#     img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
+#     c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
+#     cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
+#
+#     rows, cols = np.shape(cu8)
+#     cu8_compressed = np.zeros((rows, cols), dtype=np.uint8)
+#     bytes_compressed = 0
+#     row_encoder_len = []    # since zero padding not included storing each rows length for decompress input
+#
+#     for row in range(0, rows):
+#         encoded_bytes = encoder(cu8[row, :])
+#         bytes_compressed += len(encoded_bytes)
+#         row_encoder_len.append(len(encoded_bytes))
+#         cu8_compressed[row, 0: len(encoded_bytes)] = encoded_bytes
+#
+#         decoded_bytes = decoder(encoded_bytes)
+#         assert list(cu8[row, :]) == list(decoded_bytes)
+#
+#     cu8_uncompressed = np.zeros((rows, cols), dtype=np.uint8)
+#     for row in range(0, rows):
+#         encoded_bytes = cu8_compressed[row, 0:row_encoder_len[row]]
+#         decoded_bytes = decoder(encoded_bytes)
+#         cu8_uncompressed[row, :] = decoded_bytes[0:cols]
+#
+#     plt.figure()
+#     plt.subplot(221)
+#     plt.title("Input Image {} bytes".format(rows*cols))
+#     plt.imshow(cu8)
+#     plt.axis('off')
+#
+#     plt.subplot(222)
+#     plt.title("Compressed Image {} bytes".format(bytes_compressed))
+#     plt.imshow(cu8_compressed)
+#     plt.axis('off')
+#
+#     plt.subplot(224)
+#     plt.title("Decompressed Image ".format(bytes_compressed))
+#     plt.imshow(cu8_uncompressed)
+#     plt.axis('off')
+#     plt.savefig("./test_data/compressed-falcon-heavy-spacex.png")
+#     # plt.show()

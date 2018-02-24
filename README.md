@@ -12,14 +12,20 @@ Restrictions:
 ## install
 
 ### c
-
+ 
 #include <byte_encoder.h>
 
 ### python unit tests
 
-pip install -requirements.txt
-
+From /pytest/ folder
+```
+pip install -r requirements.txt
+```
 ## testing
+
+From /pytest/ folder
+
+nosetests -v
 
 ## usage
 
