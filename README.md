@@ -11,14 +11,26 @@ Restrictions:
 
 ## install
 
+### c
+
+#include <byte_encoder.h>
+
+### python unit tests
+
+pip install -requirements.txt
+
 ## testing
 
 ## usage
 
+```
+data_ptr[] = { 0x03, 0x74, 0x04, 0x04, 0x04, 0x35, 0x35, 0x64, 0x64, 0x64, 0x64, 0x00};
+uint16_t new_size = byte_compress( data_ptr, sizeof(data_ptr) );
+```
 
 ## results
 
-![alt text](https://drive.google.com/open?id=124UVs9X0lrYooiefuaD2nHdI9qD42b5q)
+![Image compression results](./pytest/test_data/compressed-falcon-heavy-spacex.png)
 
 
 
