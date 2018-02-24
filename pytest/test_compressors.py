@@ -198,5 +198,5 @@ def test_image_and_save():
     plt.title("Decompressed Image ".format(bytes_compressed))
     plt.imshow(cu8_uncompressed)
     plt.axis('off')
-    plt.savefig("./compressed-falcon-heavy-spacex.png")
+    plt.savefig("./test_data/compressed-falcon-heavy-spacex.png")
     # plt.show()
