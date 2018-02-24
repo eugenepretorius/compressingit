@@ -15,18 +15,15 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+        
+    /**
+     * @brief Compresses a byte stream inplace.
+     * @param[in] data_ptr   -- Input data with range 0 - 127, values are altered.
+     * @param[in] size       -- size of the data_ptr array.
+     * @return size of compression, -1 if failed.
+     */
 
-#define BE_COMPRESSION_FAILED ((uint16_t) (-1))
-    
-    
-/**
- * @brief Compresses a byte stream inplace.
- * @param[in] data_ptr   -- Input data with range 0 - 127, values are altered.
- * @param[in] size       -- size of the data_ptr array.
- * @return size of compression, -1 if failed.
- */
-
-uint16_t byte_compress( uint8_t *data_ptr, const uint16_t size);
+    uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size);
 
 #ifdef __cplusplus
 }
