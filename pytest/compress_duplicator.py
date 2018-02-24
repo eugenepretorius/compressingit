@@ -63,7 +63,7 @@ def encoder_duplicates(data, max_duplicates=127, exclude=None):
             for j in range(i+2, len(data)):
                 if v == data[j]:
                     cnt_duplicates += 1
-                    if cnt_duplicates >= max_duplicates-1:
+                    if cnt_duplicates >= max_duplicates:
                         break
                 else:
                     break
