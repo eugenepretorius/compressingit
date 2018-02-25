@@ -8,8 +8,14 @@
 #include "byte_encoder.h"
 
 
-uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size)
+int16_t byte_compress( uint8_t *data_ptr, const uint16_t size)
 {
+
+#define BC_COMPRESSION_FAILED ((int16_t) ( -1))
+#define BC_EXCLUDE            ((uint8_t) (127))
+#define BC_MAX_DUPLICATES     ((uint8_t) (127))
+#define BC_CHECK_OVERFLOW
+
     if (size == 0) {
         return 0;
     }
@@ -17,13 +23,8 @@ uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size)
     uint32_t i = 0;
     uint32_t j = 0;
 
-    #define BC_COMPRESSION_FAILED ((uint16_t) (-1))
-    #define BC_EXCLUDE            ((uint8_t) (127))
-    #define BC_MAX_DUPLICATES     ((uint8_t) (127))
-    #define BC_CHECK_OVERFLOW
-
 #ifdef BC_CHECK_OVERFLOW
-#define BC_IS_OVERFLOW(x, y) {if ((x) >= (y)) { return BC_COMPRESSION_FAILED; }}
+#define BC_IS_OVERFLOW(x, y) {if ((x) > (y)) { return BC_COMPRESSION_FAILED; }}
     
     for (i = 0; i < size; i++) {
         BC_IS_OVERFLOW(data_ptr[i], 128)
@@ -36,7 +37,7 @@ uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size)
     uint8_t cnt_duplicates = 0;
     
     uint8_t v = data_ptr[0];
-    uint8_t v_next = -1;
+    uint8_t v_next = 128;
     uint8_t *data_out;
     
     data_out = data_ptr;
@@ -44,12 +45,11 @@ uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size)
 
     for (i = 0; i < size; i++) {
         v = data_ptr[i];
-        if (i + 1 < size) {
-            v_next = data_ptr[i + 1];
-        }
+        v_next = (i + 1 < size) ? data_ptr[i + 1] : 128;  // set next value if exist else set out of range for duplicate check.
         
         if ((v == v_next) && (v != BC_EXCLUDE)) {
             cnt_duplicates = 1;
+            
             for (j = i + 2; j < size; j++) {
                 if (v == data_ptr[j]) {
                     cnt_duplicates += 1;

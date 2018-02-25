@@ -23,7 +23,7 @@ extern "C" {
      * @return size of compression, -1 if failed.
      */
 
-    uint32_t byte_compress( uint8_t *data_ptr, const uint32_t size);
+    int16_t byte_compress( uint8_t *data_ptr, const uint16_t size);
 
 #ifdef __cplusplus
 }
