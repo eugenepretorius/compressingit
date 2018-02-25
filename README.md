@@ -41,11 +41,13 @@ uint16_t new_size = byte_compress( data_ptr, sizeof(data_ptr) );
 
 ## results
 
-c-implementation
+### c-implementation
+
 ![Image compression results](./pytest/test_data/compressed-falcon-heavy-spacex.png)
 
 
-python-implementation with optimization
+### python-implementation using "compress_duplicator_nibble.py"
+
 ![Image compression results](./pytest/test_data/pycompressed-falcon-heavy-spacex.png)
 
 ## license
