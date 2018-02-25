@@ -26,16 +26,13 @@ int test_common_cmp(
     
     uint32_t i = 0;
     
-//    debug("\n[");
     for (i=0; i < size; i++) {
         if (test_data_ptr[i] != expected_data_ptr[i]) {
             debug(" FAIL");
             log_err("Value mismatch at position %d.", i);
             return BC_TEST_FAIL;
         }
-//        debug("%d, ", test_data_ptr[i]);
     }
-//    debug("]\n");
     
     debug(" ok");
     return BC_TEST_PASS;
@@ -130,17 +127,17 @@ int test_example_decoder(void)
         0x56, 0x45, 0x56, 0x56, 0x56, 0x09, 0x09, 0x09
     };
     
-    uint8_t *data_out_ptr = NULL;
+    _reset_buff();
+    
     uint8_t data_out_size = byte_deflate_calc_size(data_ptr, sizeof(data_ptr));
     buff = (uint8_t *) safe_malloc(data_out_size);
 
     data_out_size = byte_decompress(data_ptr, sizeof(data_ptr), deflate_callback_handler);
+    uint8_t *data_out_ptr = buff;
     
     int res = test_common_cmp(__func__, data_out_ptr, expected, data_out_size, sizeof(expected));
 
-    
     _reset_buff();
-    
     return res;
 }
 
@@ -154,11 +151,14 @@ int test_decoder_simple(void)
         0x00, 0x00, 0x00, 0x00,
     };
     
-    uint8_t *data_out_ptr = NULL;
+    _reset_buff();
+    
+    
     uint8_t data_out_size = byte_deflate_calc_size(data_ptr, sizeof(data_ptr));
     buff = (uint8_t *) safe_malloc(data_out_size);
     
     data_out_size = byte_decompress(data_ptr, sizeof(data_ptr), deflate_callback_handler);
+    uint8_t *data_out_ptr = buff;
     
     int res = test_common_cmp(__func__, data_out_ptr, expected, data_out_size, sizeof(expected));
     
@@ -171,12 +171,12 @@ int test_decoder_simple(void)
 int main(void)
 {
     int res = BC_TEST_PASS;
-//    res += test_example();
+    res += test_example();
     res += test_example_decoder();
-//    res += test_decoder_simple();
-//    res += test_case1();
-//    res += test_single_value();
-//    res += test_monotonic_dec();
+    res += test_decoder_simple();
+    res += test_case1();
+    res += test_single_value();
+    res += test_monotonic_dec();
     
     debug("\n\n-------------\n");
 
