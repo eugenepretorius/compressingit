@@ -87,7 +87,9 @@ int test_example(void)
     return test_common_cmp(__func__, data_ptr, expected, size, sizeof(expected));
 }
 
-
+// ------------------------------- //
+// decompresion handling memory    //
+// ------------------------------- //
 static uint8_t *buff = NULL;
 static uint32_t buff_idx = 0;
 
@@ -113,6 +115,8 @@ static void* safe_malloc(size_t n)
     }
     return p;
 }
+
+
 
 int test_example_decoder(void)
 {

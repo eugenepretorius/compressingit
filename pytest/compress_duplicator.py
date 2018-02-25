@@ -1,5 +1,5 @@
 """
-    A simple data compressor to remove sequential duplicates in data stream.
+    A simple RLE-like data compressor to remove sequential duplicates in data stream.
     Without making any assumptions about the data distributions, or storing any tables too reduces overhead size.
 
     Data input: array(data, dtype=np.int8)

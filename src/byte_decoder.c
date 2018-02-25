@@ -14,10 +14,12 @@ int16_t byte_decompress( uint8_t *data_ptr, const uint16_t size, deflate_callbac
     
     uint16_t i = 0;
     uint16_t j = 0;
+    uint16_t idx = 0;
+
     uint8_t v = 0;
     uint8_t v_next = 0;
+    
     bool v_next_skip = false;
-    uint16_t idx = 0;
     
     for (i = 0; i < size; i++) {
         v = data_ptr[i];
