@@ -8,24 +8,15 @@
 
 #include "byte_decoder.h"
 
-static void* safe_malloc(size_t n)
-// https://stackoverflow.com/a/16298916
+int16_t byte_decompress( uint8_t *data_ptr, const uint16_t size, deflate_callback func_ptr)
 {
-    void* p = malloc(n);
-    if (!p) {
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
-int16_t byte_decompress( uint8_t *data_ptr, const uint16_t size, uint8_t **deflate)
-{
+    #define YIELD(v) if (func_ptr) { func_ptr((v)); }
+    
     uint16_t i = 0;
+    uint16_t j = 0;
     uint8_t v = 0;
     uint8_t v_next = 0;
     bool v_next_skip = false;
-    
-    uint8_t buff[size*2];   // Allocate double input size for worst case on stack. Yeah, i know its not a good idea. ;P
     uint16_t idx = 0;
     
     for (i = 0; i < size; i++) {
@@ -39,32 +30,33 @@ int16_t byte_decompress( uint8_t *data_ptr, const uint16_t size, uint8_t **defla
         }
         
         if (v >= 128) {
-            buff[idx++] = v - 128;
+            YIELD(v - 128)
+            idx++;
             if ((!v_next_skip) && (v_next < 128)) {
-                memset(&buff[idx], (v - 128), v_next);
-                idx += v_next;
+                
+                for (j = 0; j < v_next + 1; j++) {
+                    YIELD(v - 128)
+                }
+                idx += v_next + 1;
+                i += 1;     // skip next since it is a length value.
             }
             else {
-                buff[idx++] = v - 128;
+                YIELD(v - 128)
+                idx++;
             }
         }
         else {
-            buff[idx++] = v;
+            YIELD(v)
+            idx++;
         }
     }
     
-    if (*deflate) {
-        log_warn("Potential loss of data.");
-    }
-    
-    *deflate = (uint8_t *) safe_malloc(idx);
-    memmove(*deflate, buff, idx);
-
     return idx;
 }
 
 
-void BC_pyfreeme(char *ptr)
+int16_t byte_deflate_calc_size( uint8_t *data_ptr, const uint16_t size)
 {
-    free(ptr);
+    return byte_decompress(data_ptr, size, NULL);
 }
+

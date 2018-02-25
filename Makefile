@@ -29,7 +29,7 @@ all: $(PROGRAM) $(LIB)
 $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 	@echo 
-	@echo To run python-tests type: nosetests -v
+	@echo To run python-tests type: nosetests -v ./pytest
 	@echo 
 
 $(LIB): $(OBJS)

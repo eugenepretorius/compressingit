@@ -1,7 +1,7 @@
 #if (BE_COMPRESSION_TESTING == 1)
 
-#include <stdio.h>
 #include "byte_encoder.h"
+#include "byte_decoder.h"
 #include "test_debug.h"
 
 #define BC_TEST_PASS    (0)
@@ -30,7 +30,7 @@ int test_common_cmp(
     for (i=0; i < size; i++) {
         if (test_data_ptr[i] != expected_data_ptr[i]) {
             debug(" FAIL");
-            log_err("Value mismatch at position.");
+            log_err("Value mismatch at position %d.", i);
             return BC_TEST_FAIL;
         }
 //        debug("%d, ", test_data_ptr[i]);
@@ -86,18 +86,97 @@ int test_example(void)
     };
     
     uint16_t size = byte_compress(data_ptr, sizeof(data_ptr));
-
+    
     return test_common_cmp(__func__, data_ptr, expected, size, sizeof(expected));
+}
+
+
+static uint8_t *buff = NULL;
+static uint32_t buff_idx = 0;
+
+void _reset_buff(void) {
+    free(buff);
+    buff = NULL;
+    buff_idx = 0;
+}
+
+void deflate_callback_handler(uint8_t data)
+{
+    if (buff) {
+        buff[buff_idx++] = data;
+    }
+}
+
+static void* safe_malloc(size_t n)
+// https://stackoverflow.com/a/16298916
+{
+    void* p = malloc(n);
+    if (!p) {
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
+
+int test_example_decoder(void)
+{
+    uint8_t data_ptr[] = {
+        3, 116, 132, 1, 181, 0, 228, 2,
+        128, 3, 86, 69, 214, 1, 137, 1
+    };
+    
+    uint8_t expected[] = {
+        0x03, 0x74, 0x04, 0x04, 0x04, 0x35, 0x35, 0x64,
+        0x64, 0x64, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x56, 0x45, 0x56, 0x56, 0x56, 0x09, 0x09, 0x09
+    };
+    
+    uint8_t *data_out_ptr = NULL;
+    uint8_t data_out_size = byte_deflate_calc_size(data_ptr, sizeof(data_ptr));
+    buff = (uint8_t *) safe_malloc(data_out_size);
+
+    data_out_size = byte_decompress(data_ptr, sizeof(data_ptr), deflate_callback_handler);
+    
+    int res = test_common_cmp(__func__, data_out_ptr, expected, data_out_size, sizeof(expected));
+
+    
+    _reset_buff();
+    
+    return res;
+}
+
+int test_decoder_simple(void)
+{
+    uint8_t data_ptr[] = {
+        128, 2,
+    };
+    
+    uint8_t expected[] = {
+        0x00, 0x00, 0x00, 0x00,
+    };
+    
+    uint8_t *data_out_ptr = NULL;
+    uint8_t data_out_size = byte_deflate_calc_size(data_ptr, sizeof(data_ptr));
+    buff = (uint8_t *) safe_malloc(data_out_size);
+    
+    data_out_size = byte_decompress(data_ptr, sizeof(data_ptr), deflate_callback_handler);
+    
+    int res = test_common_cmp(__func__, data_out_ptr, expected, data_out_size, sizeof(expected));
+    
+    _reset_buff();
+    
+    return res;
 }
 
 
 int main(void)
 {
     int res = BC_TEST_PASS;
-    res += test_example();
-    res += test_case1();
-    res += test_single_value();
-    res += test_monotonic_dec();
+//    res += test_example();
+    res += test_example_decoder();
+//    res += test_decoder_simple();
+//    res += test_case1();
+//    res += test_single_value();
+//    res += test_monotonic_dec();
     
     debug("\n\n-------------\n");
 
@@ -111,4 +190,10 @@ int main(void)
     return res;
 }
 
+#else
+#include <stdio.h>
+int main(void)
+{
+    printf("\nCompile with -DBE_COMPRESSION_TESTING. \n");
+}
 #endif  // BE_COMPRESSION_TESTING
