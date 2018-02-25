@@ -5,17 +5,17 @@ import matplotlib.image as mpimg
 import numpy as np
 import unittest
 
-# TEST compress_duplicator.py
+# # TEST compress_duplicator.py
 # from compress_duplicator import encoder_duplicates as encoder
 # from compress_duplicator import decoder_duplicates as decoder
 # from compress_duplicator import COMPRESSOR_ID
 
-# TEST compress_duplicator_nibble.py
+# # TEST compress_duplicator_nibble.py
 # from compress_duplicator_nibble import encoder_duplicates_with_nibble as encoder
 # from compress_duplicator_nibble import decoder_duplicates_with_nibble as decoder
 # from compress_duplicator_nibble import COMPRESSOR_ID
 
-# TEST c-code implementation
+# #TEST c-code implementation
 from compress_cwrapper import c_byte_encoder as encoder
 from compress_cwrapper import c_byte_decoder as decoder
 from compress_duplicator import encoder_duplicates

@@ -11,21 +11,26 @@ Restrictions:
 
 ## install
 
+```
+pip install -r requirements.txt
+```
+
 ### c
  
 #include <byte_encoder.h>
 
-### python unit tests
 
-From /pytest/ folder
-```
-pip install -r requirements.txt
-```
 ## testing
 
-From /pytest/ folder
+build it using
+```make```
 
-nosetests -v
+run c tests
+``` ./bc_compress```
+
+run python tests
+```nosetests -v```
+
 
 ## usage
 
@@ -36,9 +41,12 @@ uint16_t new_size = byte_compress( data_ptr, sizeof(data_ptr) );
 
 ## results
 
+c-implementation
 ![Image compression results](./pytest/test_data/compressed-falcon-heavy-spacex.png)
 
 
+python-implementation with optimization
+![Image compression results](./pytest/test_data/pycompressed-falcon-heavy-spacex.png)
 
 ## license
 

@@ -27,13 +27,13 @@ all: $(PROGRAM) $(LIB)
 	$(CC) $(CFLAGS) -pg -c $^ -o $@
 
 $(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 	@echo 
 	@echo To run python-tests type: nosetests -v ./pytest
 	@echo 
 
 $(LIB): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) -shared
+	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) -shared
 	@echo 
 	@echo To run type: ./bc_compress
 	@echo 
