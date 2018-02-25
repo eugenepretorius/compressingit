@@ -1,3 +1,4 @@
+import os
 from random import randint
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -15,9 +16,10 @@ import unittest
 # from compress_duplicator_nibble import COMPRESSOR_ID
 
 # TEST c-code implementation
-from compress_duplicator import encoder_duplicates
 from compress_cwrapper import c_byte_encoder as encoder
-from compress_duplicator import decoder_duplicates as decoder
+from compress_cwrapper import c_byte_decoder as decoder
+from compress_duplicator import encoder_duplicates
+from compress_duplicator import decoder_duplicates
 from compress_cwrapper import COMPRESSOR_ID
 
 
@@ -36,6 +38,12 @@ def _common_enc_dec(test_data):
 
 def test_1byte():
     dummy_data = list([65])
+    compressed_data = _common_enc_dec(dummy_data)
+    return compressed_data
+
+
+def test_2bytes():
+    dummy_data = list([1, 2])
     compressed_data = _common_enc_dec(dummy_data)
     return compressed_data
 
@@ -140,7 +148,8 @@ def test_example_data():
 
 def test_image_with_variable_length():
     """ Test if an encoding data stream can be concatenated with same results on 'real' data"""
-    img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
+    img_path = os.path.abspath(os.path.join(__file__, '../', 'test_data', 'falcon-heavy-test-flight-spacex.png'))
+    img = mpimg.imread(img_path)
     c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
     cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
 
@@ -167,7 +176,8 @@ def test_image_with_variable_length():
 
 
 def test_image_and_save():
-    img = mpimg.imread("./test_data/falcon-heavy-test-flight-spacex.png")
+    img_path = os.path.abspath(os.path.join(__file__, '../', 'test_data', 'falcon-heavy-test-flight-spacex.png'))
+    img = mpimg.imread(img_path)
     c = (img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3
     cu8 = np.array(c / np.max(c) * 127, dtype=np.uint8)
 
@@ -206,5 +216,6 @@ def test_image_and_save():
     plt.title("Decompressed Image ".format(bytes_compressed))
     plt.imshow(cu8_uncompressed)
     plt.axis('off')
-    plt.savefig("./test_data/compressed-falcon-heavy-spacex.png")
+    img_out_path = os.path.abspath(os.path.join(__file__, '../', 'test_data', 'compressed-falcon-heavy-spacex.png'))
+    plt.savefig(img_out_path)
     # plt.show()
