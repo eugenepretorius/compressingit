@@ -62,7 +62,7 @@ int16_t byte_compress( uint8_t *data_ptr, const uint16_t size)
 
 #define BC_COMPRESSION_FAILED ((int16_t) ( -1))
 #define BC_EXCLUDE            ((uint8_t) (128))     // Set to value in range 0-127 to exclude from RLE compression.
-#define BC_MAX_DUPLICATES     ((uint8_t) (255))     // Maximum number of sequenxial duplicates that can be encoded.
+#define BC_MAX_DUPLICATES     ((uint8_t) (255))     // Maximum number of sequencial duplicates that can be encoded.
 #define BC_CHECK_OVERFLOW                           // Can remove overflow check for release.
 
     if (size == 0) {
@@ -76,7 +76,7 @@ int16_t byte_compress( uint8_t *data_ptr, const uint16_t size)
 #define BC_IS_OVERFLOW(x, y) {if ((x) > (y)) { return BC_COMPRESSION_FAILED; }}
     
     for (i = 0; i < size; i++) {
-        BC_IS_OVERFLOW(data_ptr[i], 128)
+        BC_IS_OVERFLOW(data_ptr[i], 127)
     }
     
 #else
@@ -111,10 +111,10 @@ int16_t byte_compress( uint8_t *data_ptr, const uint16_t size)
                 }
             }
             
-            BC_IS_OVERFLOW(out_size + 2, size)
+            BC_IS_OVERFLOW(out_size + 2, size)  // Should never happen using this method.
             
             (*data_out++) = (v + 128);          // Set MSB bit of first value in sequence which is duplicate.
-            (*data_out++) = cnt_duplicates-1;   // Set next byte as number of duplicates after previous.
+            (*data_out++) = cnt_duplicates - 1; // Set next byte as number of duplicates after previous.
             out_size += 2;
 
             i += cnt_duplicates;                // Move iteration forward to skip duplicates.

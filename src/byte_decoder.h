@@ -18,8 +18,6 @@ extern "C" {
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-#include "test_debug.h"
     
     // The decompressed data stream function type definition.
     typedef void (*deflate_callback)(uint8_t data);
