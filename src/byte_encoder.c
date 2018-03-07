@@ -69,6 +69,10 @@ int16_t byte_compress( uint8_t *data_ptr, const uint16_t size)
         return 0;
     }
 
+    if (data_ptr == 0) {
+        return 0;
+    }
+
     uint32_t i = 0;
     uint32_t j = 0;
 
